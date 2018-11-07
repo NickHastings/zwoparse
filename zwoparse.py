@@ -392,40 +392,37 @@ def main():
                     segment.cadence if segment.cadence else "", segment.working))
 
                 # textevents are not written to csv because csv is not hierarchic
-        elif filetype == "erg":
+        elif filetype in ('erg', 'mrc'):
             lines.append('[COURSE HEADER]\n')
-            lines.append('FTP = %d\n' % ftp )
+            if filetype == 'erg':
+                lines.append('FTP = %d\n' % ftp )
             lines.append('VERSION = 2\nUNITS = METRIC\n')
             lines.append('DESCRIPTION = %s\n' % workout['description'] )
             lines.append('FILENAME = %s\n' % outfile_with_extension )
-            lines.append('MINUTES WATTS\n[END COURSE HEADER]\n[COURSE DATA]\n')
+            if filetype == 'erg':
+                lines.append('MINUTES WATTS\n')
+            else:
+                lines.append('MINUTES PERCENTAGE\n')
+
+            lines.append('[END COURSE HEADER]\n[COURSE DATA]\n')
             for segment in workout['segments']:
                 t0 = float(segment.start_time)/60.0
                 t1 = float(segment.end_time)/60.0
                 if segment.power.min_intensity:
-                    lines.append( '%5.2f %s\n' % ( t0, convert_to_abs_power(segment.power.min_intensity,ftp) ))
-                    lines.append( '%5.2f %s\n' % ( t1, convert_to_abs_power(segment.power.max_intensity,ftp) ))
+                    p0 = segment.power.min_intensity
                 else:
-                    lines.append( '%5.2f %s\n' % ( t0, convert_to_abs_power(segment.power.max_intensity,ftp) ))
-                    lines.append( '%5.2f %s\n' % ( t1, convert_to_abs_power(segment.power.max_intensity,ftp) ))
+                    p0 = segment.power.max_intensity
+                p1= segment.power.max_intensity
+
+                if filetype == 'erg':
+                    lines.append( '%5.2f %s\n' % ( t0, convert_to_abs_power(p0,ftp) ))
+                    lines.append( '%5.2f %s\n' % ( t1, convert_to_abs_power(p1,ftp) ))
+                else:
+                    lines.append( '%5.2f %4.0f\n' % ( t0, 100.0*float(p0)))
+                    lines.append( '%5.2f %4.0f\n' % ( t1, 100.0*float(p1)))
+
             lines.append('[END COURSE DATA]\n')
 
-        elif filetype == "mrc":
-            lines.append('[COURSE HEADER]\n')
-            lines.append('VERSION = 2\nUNITS = METRIC\n')
-            lines.append('DESCRIPTION = %s\n' % workout['description'] )
-            lines.append('FILENAME = %s\n' % outfile_with_extension )
-            lines.append('MINUTES PERCENTAGE\n[END COURSE HEADER]\n[COURSE DATA]\n')
-            for segment in workout['segments']:
-                t0 = float(segment.start_time)/60.0
-                t1 = float(segment.end_time)/60.0
-                if segment.power.min_intensity:
-                    lines.append( '%5.2f %4.0f\n' % ( t0, 100.0*float(segment.power.min_intensity)))
-                    lines.append( '%5.2f %4.0f\n' % ( t1, 100.0*float(segment.power.max_intensity)))
-                else:
-                    lines.append( '%5.2f %4.0f\n' % ( t0, 100.0*float(segment.power.max_intensity)))
-                    lines.append( '%5.2f %4.0f\n' % ( t1, 100.0*float(segment.power.max_intensity)))
-            lines.append('[END COURSE DATA]\n')
         elif filetype == "json":
             segments_json = ','.join([x.toJSON() for x in workout['segments']])
             lines.append('{"name": %s, "description" : %s, "segments":[%s]}' % (
