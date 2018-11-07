@@ -41,6 +41,7 @@ import xml.etree.ElementTree as ET
 import datetime
 import json
 import sys
+import os
 
 
 class Power:
@@ -53,8 +54,8 @@ class Power:
 
 class TextEvent:
     """ A simple class to represent a text event with timeoffset and message.
-    timeoffset is seconds from the beginning of the workout. 
-    timeoffset_relative is seconds form the beginning of the segment in which the 
+    timeoffset is seconds from the beginning of the workout.
+    timeoffset_relative is seconds form the beginning of the segment in which the
     textmessage appears (useful for auto-hotkey timings)"""
 
     def __init__(self, timeoffset, timeoffset_relative, message):
@@ -362,7 +363,7 @@ def main():
     if args.outfile != None:
         outfile_with_extension = args.outfile
     else:
-        outfile_with_extension = "%s.%s" % (filename, filetype)
+        outfile_with_extension = "%s.%s" % (os.path.splitext(os.path.basename(args.file.name))[0], filetype)
 
     lines = []
 
@@ -408,7 +409,7 @@ def main():
                     lines.append( '%5.2f %s\n' % ( t0, convert_to_abs_power(segment.power.max_intensity,ftp) ))
                     lines.append( '%5.2f %s\n' % ( t1, convert_to_abs_power(segment.power.max_intensity,ftp) ))
             lines.append('[END COURSE DATA]\n')
-            
+
         elif filetype == "mrc":
             lines.append('[COURSE HEADER]\n')
             lines.append('VERSION = 2\nUNITS = METRIC\n')
